@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>States of Fragility — Snail</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f4f1ec;
+        --panel: #ffffff;
+        --text: #1c1b22;
+        --muted: #8a8898;
+        --border: #ddd9d2;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "IBM Plex Sans", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        background: #1c1b22;
+        padding: 14px 32px;
+        display: flex;
+        align-items: center;
+        border-bottom: 3px solid #bf3a2b;
+      }
+      .logo {
+        font-family: "Source Serif 4", serif;
+        font-size: 17px;
+        font-weight: 600;
+        color: #fff;
+      }
+      .logo em {
+        color: #bf3a2b;
+        font-style: normal;
+      }
+      .logo-sub {
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.42);
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+        margin-top: 2px;
+      }
+      .oecd-badge {
+        margin-left: auto;
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.3);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .page {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        width: 228px;
+        flex-shrink: 0;
+        background: var(--panel);
+        border-right: 1px solid var(--border);
+        padding: 20px 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        overflow-y: auto;
+      }
+      .sidebar h2 {
+        font-family: "Source Serif 4", serif;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.4;
+      }
+      .sidebar p {
+        font-size: 11px;
+        color: var(--muted);
+        line-height: 1.6;
+        margin-top: 5px;
+      }
+      .sec-label {
+        font-size: 9.5px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+      hr {
+        border: none;
+        border-top: 1px solid var(--border);
+      }
+
+      .dim-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .dim-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 7px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .dim-row:hover {
+        background: #eee9e2;
+      }
+      .dim-row.active {
+        background: #e8e2d8;
+      }
+      .dim-row.faded {
+        opacity: 0.28;
+      }
+      .dim-chip {
+        width: 9px;
+        height: 9px;
+        border-radius: 2px;
+        flex-shrink: 0;
+      }
+      .dim-name {
+        font-size: 11.5px;
+        font-weight: 500;
+        flex: 1;
+      }
+      .dim-ring {
+        font-size: 9px;
+        color: var(--muted);
+      }
+
+      .scale-row {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 4px;
+      }
+      .scale-bar {
+        flex: 1;
+        height: 7px;
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .scale-end {
+        font-size: 8.5px;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .scale-name {
+        font-size: 8.5px;
+        font-weight: 500;
+        width: 76px;
+      }
+
+      .tier-list {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      .tier-row {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 2px 0;
+      }
+      .tier-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .tier-name {
+        font-size: 11px;
+        flex: 1;
+      }
+      .tier-n {
+        font-size: 10px;
+        color: var(--muted);
+      }
+
+      .stat-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+      .stat-box {
+        background: var(--bg);
+        border-radius: 5px;
+        padding: 9px 9px 7px;
+      }
+      .stat-val {
+        font-family: "Source Serif 4", serif;
+        font-size: 19px;
+        font-weight: 600;
+        line-height: 1;
+      }
+      .stat-val sup {
+        font-size: 10px;
+        opacity: 0.55;
+      }
+      .stat-lbl {
+        font-size: 9.5px;
+        color: var(--muted);
+        margin-top: 3px;
+        line-height: 1.3;
+      }
+
+      .search-wrap {
+        position: relative;
+      }
+      .search-wrap input {
+        font-family: "IBM Plex Sans", sans-serif;
+        font-size: 11.5px;
+        width: 100%;
+        padding: 6px 28px 6px 11px;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        background: var(--bg);
+        color: var(--text);
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .search-wrap input:focus {
+        border-color: #bf3a2b;
+      }
+      .search-wrap .s-icon {
+        position: absolute;
+        right: 9px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 13px;
+        color: var(--muted);
+        pointer-events: none;
+      }
+
+      /* Chart */
+      .chart-area {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        padding: 8px;
+      }
+      #snail-svg {
+        display: block;
+        max-width: 100%;
+        max-height: 100%;
+      }
+
+      /* Tooltip */
+      #tt {
+        position: fixed;
+        pointer-events: none;
+        z-index: 200;
+        width: 226px;
+        background: #1c1b22;
+        color: #fff;
+        border-radius: 8px;
+        padding: 12px 14px 11px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.36);
+        font-size: 11.5px;
+        opacity: 0;
+        transition: opacity 0.12s;
+        border-top: 3px solid #bf3a2b;
+      }
+      #tt.on {
+        opacity: 1;
+      }
+      #tt .tt-name {
+        font-family: "Source Serif 4", serif;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 1px;
+      }
+      #tt .tt-tier {
+        font-size: 9.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        opacity: 0.62;
+        margin-bottom: 9px;
+      }
+      #tt .tt-dims {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      #tt .tt-dr {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      #tt .tt-dn {
+        width: 82px;
+        font-size: 9.5px;
+        opacity: 0.58;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        flex-shrink: 0;
+      }
+      #tt .tt-bg {
+        flex: 1;
+        height: 4px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+      }
+      #tt .tt-fill {
+        height: 100%;
+        border-radius: 2px;
+      }
+      #tt .tt-dv {
+        font-size: 10px;
+        width: 22px;
+        text-align: right;
+        opacity: 0.62;
+      }
+      #tt .tt-total {
+        margin-top: 9px;
+        padding-top: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.09);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      #tt .tt-tl {
+        font-size: 10px;
+        opacity: 0.5;
+      }
+      #tt .tt-tv {
+        font-family: "Source Serif 4", serif;
+        font-size: 17px;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <div class="logo">States of <em>Fragility</em></div>
+        <div class="logo-sub">
+          OECD Multidimensional Fragility Framework · 2025
+        </div>
+      </div>
+      <div class="oecd-badge">OECD</div>
+    </header>
+
+    <div class="page">
+      <!-- SIDEBAR -->
+      <div class="sidebar">
+        <div class="search-wrap">
+          <input type="text" id="search" placeholder="Search country…" />
+          <span class="s-icon">⌕</span>
+        </div>
+
+        <div>
+          <h2>The Fragility Snail</h2>
+          <p>
+            61 high and extreme fragility contexts arranged in a 270° arc. Each
+            thin column is one country; six concentric colour bands show six
+            dimensions. Deeper colour = worse performance.
+          </p>
+        </div>
+
+        <hr />
+
+        <div>
+          <div class="sec-label">Dimensions (inner → outer)</div>
+          <div class="dim-list" id="dim-list"></div>
+        </div>
+
+        <hr />
+
+        <div>
+          <div class="sec-label">Colour intensity</div>
+          <div id="scale-legend"></div>
+          <p style="margin-top: 6px">
+            Normalised within dataset. Pale = best-performing in set; saturated
+            = worst.
+          </p>
+        </div>
+
+        <hr />
+
+        <div>
+          <div class="sec-label">Classification</div>
+          <div class="tier-list">
+            <div class="tier-row">
+              <div class="tier-dot" style="background: #bf3a2b"></div>
+              <span class="tier-name">Extreme Fragility</span>
+              <span class="tier-n">18</span>
+            </div>
+            <div class="tier-row">
+              <div class="tier-dot" style="background: #e07b39"></div>
+              <span class="tier-name">High Fragility</span>
+              <span class="tier-n">43</span>
+            </div>
+          </div>
+        </div>
+
+        <hr />
+
+        <div>
+          <div class="sec-label">Global Snapshot · 2025</div>
+          <div class="stat-grid">
+            <div class="stat-box">
+              <div class="stat-val">61</div>
+              <div class="stat-lbl">Fragile contexts</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-val">2<sup>bn</sup></div>
+              <div class="stat-lbl">People at risk</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-val">25<sup>%</sup></div>
+              <div class="stat-lbl">World population</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-val">72<sup>%</sup></div>
+              <div class="stat-lbl">Extreme poor</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHART -->
+      <div class="chart-area">
+        <svg
+          id="snail-svg"
+          viewBox="0 0 960 780"
+          xmlns="http://www.w3.org/2000/svg"
+        ></svg>
+      </div>
+    </div>
+
+    <div id="tt">
+      <div class="tt-name" id="tt-name"></div>
+      <div class="tt-tier" id="tt-tier"></div>
+      <div class="tt-dims" id="tt-dims"></div>
+      <div class="tt-total">
+        <span class="tt-tl">Overall Score</span>
+        <span class="tt-tv" id="tt-tv"></span>
+      </div>
+    </div>
+
+    <script>
+      // ─── DATA ─────────────────────────────────────────────────────────────────────
+      // 61 contexts ordered most → least fragile. Scores 0–100 per dimension.
+      const contexts = [
+        // EXTREME (18)
+        {
+          name: "Sudan",
+          tier: "extreme",
+          overall: 95,
+          eco: 95,
+          env: 82,
+          hum: 93,
+          pol: 97,
+          sec: 97,
+          soc: 92,
+        },
+        {
+          name: "Yemen",
+          tier: "extreme",
+          overall: 93,
+          eco: 94,
+          env: 75,
+          hum: 92,
+          pol: 95,
+          sec: 95,
+          soc: 90,
+        },
+        {
+          name: "Somalia",
+          tier: "extreme",
+          overall: 92,
+          eco: 90,
+          env: 79,
+          hum: 94,
+          pol: 93,
+          sec: 96,
+          soc: 89,
+        },
+        {
+          name: "Afghanistan",
+          tier: "extreme",
+          overall: 91,
+          eco: 88,
+          env: 72,
+          hum: 91,
+          pol: 92,
+          sec: 93,
+          soc: 92,
+        },
+        {
+          name: "South Sudan",
+          tier: "extreme",
+          overall: 90,
+          eco: 91,
+          env: 76,
+          hum: 93,
+          pol: 90,
+          sec: 94,
+          soc: 88,
+        },
+        {
+          name: "C. African Rep.",
+          tier: "extreme",
+          overall: 88,
+          eco: 86,
+          env: 67,
+          hum: 90,
+          pol: 88,
+          sec: 92,
+          soc: 87,
+        },
+        {
+          name: "DR Congo",
+          tier: "extreme",
+          overall: 87,
+          eco: 84,
+          env: 70,
+          hum: 89,
+          pol: 88,
+          sec: 93,
+          soc: 85,
+        },
+        {
+          name: "Syria",
+          tier: "extreme",
+          overall: 86,
+          eco: 87,
+          env: 68,
+          hum: 85,
+          pol: 90,
+          sec: 89,
+          soc: 82,
+        },
+        {
+          name: "Haiti",
+          tier: "extreme",
+          overall: 86,
+          eco: 84,
+          env: 83,
+          hum: 85,
+          pol: 88,
+          sec: 90,
+          soc: 83,
+        },
+        {
+          name: "Mali",
+          tier: "extreme",
+          overall: 84,
+          eco: 82,
+          env: 78,
+          hum: 87,
+          pol: 84,
+          sec: 91,
+          soc: 82,
+        },
+        {
+          name: "Burkina Faso",
+          tier: "extreme",
+          overall: 83,
+          eco: 80,
+          env: 77,
+          hum: 84,
+          pol: 82,
+          sec: 90,
+          soc: 81,
+        },
+        {
+          name: "Myanmar",
+          tier: "extreme",
+          overall: 83,
+          eco: 79,
+          env: 70,
+          hum: 81,
+          pol: 90,
+          sec: 88,
+          soc: 80,
+        },
+        {
+          name: "Libya",
+          tier: "extreme",
+          overall: 82,
+          eco: 73,
+          env: 62,
+          hum: 78,
+          pol: 92,
+          sec: 89,
+          soc: 79,
+        },
+        {
+          name: "Niger",
+          tier: "extreme",
+          overall: 81,
+          eco: 79,
+          env: 81,
+          hum: 84,
+          pol: 77,
+          sec: 85,
+          soc: 78,
+        },
+        {
+          name: "Eritrea",
+          tier: "extreme",
+          overall: 80,
+          eco: 77,
+          env: 65,
+          hum: 82,
+          pol: 81,
+          sec: 80,
+          soc: 78,
+        },
+        {
+          name: "Guinea-Bissau",
+          tier: "extreme",
+          overall: 79,
+          eco: 76,
+          env: 62,
+          hum: 80,
+          pol: 79,
+          sec: 75,
+          soc: 77,
+        },
+        {
+          name: "Palestine",
+          tier: "extreme",
+          overall: 79,
+          eco: 82,
+          env: 72,
+          hum: 78,
+          pol: 80,
+          sec: 86,
+          soc: 76,
+        },
+        {
+          name: "Venezuela",
+          tier: "extreme",
+          overall: 78,
+          eco: 84,
+          env: 58,
+          hum: 78,
+          pol: 80,
+          sec: 80,
+          soc: 70,
+        },
+        // HIGH (43)
+        {
+          name: "Chad",
+          tier: "high",
+          overall: 77,
+          eco: 75,
+          env: 79,
+          hum: 80,
+          pol: 77,
+          sec: 82,
+          soc: 75,
+        },
+        {
+          name: "Iraq",
+          tier: "high",
+          overall: 76,
+          eco: 68,
+          env: 70,
+          hum: 72,
+          pol: 80,
+          sec: 84,
+          soc: 74,
+        },
+        {
+          name: "Ethiopia",
+          tier: "high",
+          overall: 75,
+          eco: 72,
+          env: 74,
+          hum: 77,
+          pol: 76,
+          sec: 80,
+          soc: 70,
+        },
+        {
+          name: "Nigeria",
+          tier: "high",
+          overall: 74,
+          eco: 68,
+          env: 68,
+          hum: 72,
+          pol: 70,
+          sec: 82,
+          soc: 68,
+        },
+        {
+          name: "Pakistan",
+          tier: "high",
+          overall: 73,
+          eco: 70,
+          env: 72,
+          hum: 74,
+          pol: 74,
+          sec: 78,
+          soc: 68,
+        },
+        {
+          name: "Mozambique",
+          tier: "high",
+          overall: 72,
+          eco: 70,
+          env: 76,
+          hum: 77,
+          pol: 72,
+          sec: 74,
+          soc: 68,
+        },
+        {
+          name: "Congo Rep.",
+          tier: "high",
+          overall: 71,
+          eco: 68,
+          env: 62,
+          hum: 73,
+          pol: 72,
+          sec: 74,
+          soc: 67,
+        },
+        {
+          name: "Zimbabwe",
+          tier: "high",
+          overall: 71,
+          eco: 74,
+          env: 68,
+          hum: 72,
+          pol: 74,
+          sec: 68,
+          soc: 70,
+        },
+        {
+          name: "Guinea",
+          tier: "high",
+          overall: 70,
+          eco: 68,
+          env: 63,
+          hum: 73,
+          pol: 72,
+          sec: 67,
+          soc: 68,
+        },
+        {
+          name: "Cameroon",
+          tier: "high",
+          overall: 70,
+          eco: 66,
+          env: 64,
+          hum: 72,
+          pol: 70,
+          sec: 76,
+          soc: 64,
+        },
+        {
+          name: "Uganda",
+          tier: "high",
+          overall: 69,
+          eco: 64,
+          env: 66,
+          hum: 70,
+          pol: 68,
+          sec: 70,
+          soc: 64,
+        },
+        {
+          name: "Lebanon",
+          tier: "high",
+          overall: 69,
+          eco: 84,
+          env: 63,
+          hum: 68,
+          pol: 72,
+          sec: 70,
+          soc: 64,
+        },
+        {
+          name: "Madagascar",
+          tier: "high",
+          overall: 68,
+          eco: 65,
+          env: 72,
+          hum: 72,
+          pol: 66,
+          sec: 64,
+          soc: 64,
+        },
+        {
+          name: "N. Sudan",
+          tier: "high",
+          overall: 68,
+          eco: 66,
+          env: 62,
+          hum: 68,
+          pol: 70,
+          sec: 70,
+          soc: 66,
+        },
+        {
+          name: "Eswatini",
+          tier: "high",
+          overall: 67,
+          eco: 65,
+          env: 60,
+          hum: 70,
+          pol: 67,
+          sec: 62,
+          soc: 66,
+        },
+        {
+          name: "Malawi",
+          tier: "high",
+          overall: 67,
+          eco: 64,
+          env: 65,
+          hum: 70,
+          pol: 65,
+          sec: 62,
+          soc: 64,
+        },
+        {
+          name: "Angola",
+          tier: "high",
+          overall: 66,
+          eco: 64,
+          env: 64,
+          hum: 68,
+          pol: 66,
+          sec: 65,
+          soc: 62,
+        },
+        {
+          name: "Tanzania",
+          tier: "high",
+          overall: 66,
+          eco: 62,
+          env: 65,
+          hum: 67,
+          pol: 65,
+          sec: 65,
+          soc: 61,
+        },
+        {
+          name: "Burundi",
+          tier: "high",
+          overall: 65,
+          eco: 63,
+          env: 66,
+          hum: 68,
+          pol: 65,
+          sec: 67,
+          soc: 62,
+        },
+        {
+          name: "Honduras",
+          tier: "high",
+          overall: 65,
+          eco: 62,
+          env: 60,
+          hum: 64,
+          pol: 63,
+          sec: 72,
+          soc: 62,
+        },
+        {
+          name: "Zambia",
+          tier: "high",
+          overall: 64,
+          eco: 62,
+          env: 63,
+          hum: 66,
+          pol: 62,
+          sec: 60,
+          soc: 61,
+        },
+        {
+          name: "Rwanda",
+          tier: "high",
+          overall: 64,
+          eco: 60,
+          env: 64,
+          hum: 65,
+          pol: 66,
+          sec: 64,
+          soc: 60,
+        },
+        {
+          name: "Togo",
+          tier: "high",
+          overall: 63,
+          eco: 61,
+          env: 63,
+          hum: 65,
+          pol: 63,
+          sec: 59,
+          soc: 61,
+        },
+        {
+          name: "Liberia",
+          tier: "high",
+          overall: 63,
+          eco: 61,
+          env: 63,
+          hum: 66,
+          pol: 62,
+          sec: 60,
+          soc: 61,
+        },
+        {
+          name: "Senegal",
+          tier: "high",
+          overall: 62,
+          eco: 60,
+          env: 62,
+          hum: 64,
+          pol: 61,
+          sec: 62,
+          soc: 60,
+        },
+        {
+          name: "Kenya",
+          tier: "high",
+          overall: 62,
+          eco: 59,
+          env: 64,
+          hum: 62,
+          pol: 63,
+          sec: 64,
+          soc: 59,
+        },
+        {
+          name: "Comoros",
+          tier: "high",
+          overall: 62,
+          eco: 61,
+          env: 62,
+          hum: 64,
+          pol: 62,
+          sec: 58,
+          soc: 60,
+        },
+        {
+          name: "Papua N.G.",
+          tier: "high",
+          overall: 61,
+          eco: 59,
+          env: 62,
+          hum: 63,
+          pol: 60,
+          sec: 63,
+          soc: 58,
+        },
+        {
+          name: "Bangladesh",
+          tier: "high",
+          overall: 61,
+          eco: 58,
+          env: 72,
+          hum: 57,
+          pol: 63,
+          sec: 59,
+          soc: 57,
+        },
+        {
+          name: "Kyrgyzstan",
+          tier: "high",
+          overall: 61,
+          eco: 58,
+          env: 58,
+          hum: 57,
+          pol: 64,
+          sec: 62,
+          soc: 58,
+        },
+        {
+          name: "Guatemala",
+          tier: "high",
+          overall: 60,
+          eco: 58,
+          env: 59,
+          hum: 59,
+          pol: 59,
+          sec: 66,
+          soc: 57,
+        },
+        {
+          name: "Cambodia",
+          tier: "high",
+          overall: 60,
+          eco: 57,
+          env: 61,
+          hum: 59,
+          pol: 62,
+          sec: 58,
+          soc: 57,
+        },
+        {
+          name: "Bolivia",
+          tier: "high",
+          overall: 58,
+          eco: 56,
+          env: 59,
+          hum: 57,
+          pol: 61,
+          sec: 56,
+          soc: 57,
+        },
+        {
+          name: "Egypt",
+          tier: "high",
+          overall: 58,
+          eco: 57,
+          env: 62,
+          hum: 54,
+          pol: 60,
+          sec: 58,
+          soc: 56,
+        },
+        {
+          name: "Morocco",
+          tier: "high",
+          overall: 57,
+          eco: 55,
+          env: 61,
+          hum: 54,
+          pol: 58,
+          sec: 55,
+          soc: 56,
+        },
+        {
+          name: "Laos",
+          tier: "high",
+          overall: 57,
+          eco: 55,
+          env: 61,
+          hum: 55,
+          pol: 59,
+          sec: 53,
+          soc: 56,
+        },
+        {
+          name: "Côte d'Ivoire",
+          tier: "high",
+          overall: 56,
+          eco: 55,
+          env: 61,
+          hum: 57,
+          pol: 56,
+          sec: 57,
+          soc: 54,
+        },
+        {
+          name: "Sierra Leone",
+          tier: "high",
+          overall: 55,
+          eco: 53,
+          env: 60,
+          hum: 58,
+          pol: 54,
+          sec: 52,
+          soc: 54,
+        },
+        {
+          name: "W. Sahara",
+          tier: "high",
+          overall: 55,
+          eco: 53,
+          env: 58,
+          hum: 57,
+          pol: 55,
+          sec: 57,
+          soc: 53,
+        },
+        {
+          name: "Tajikistan",
+          tier: "high",
+          overall: 54,
+          eco: 53,
+          env: 56,
+          hum: 53,
+          pol: 57,
+          sec: 53,
+          soc: 54,
+        },
+        {
+          name: "Djibouti",
+          tier: "high",
+          overall: 54,
+          eco: 54,
+          env: 60,
+          hum: 54,
+          pol: 55,
+          sec: 52,
+          soc: 53,
+        },
+        {
+          name: "Timor-Leste",
+          tier: "high",
+          overall: 53,
+          eco: 52,
+          env: 58,
+          hum: 54,
+          pol: 53,
+          sec: 51,
+          soc: 52,
+        },
+      ];
+
+      // ─── DIMENSIONS ───────────────────────────────────────────────────────────────
+      const dims = [
+        { key: "eco", label: "Economic", color: "#C8860A" },
+        { key: "env", label: "Environmental", color: "#3D8A52" },
+        { key: "hum", label: "Human", color: "#6B4DAE" },
+        { key: "pol", label: "Political", color: "#1A5FA3" },
+        { key: "sec", label: "Security", color: "#BF3A2B" },
+        { key: "soc", label: "Societal", color: "#C5621E" },
+      ];
+
+      // Per-dimension normalisation within dataset → [0,1]
+      const normScores = {};
+      dims.forEach((d) => {
+        const vals = contexts.map((c) => c[d.key]);
+        const lo = d3.min(vals),
+          hi = d3.max(vals);
+        normScores[d.key] = contexts.map((c) => (c[d.key] - lo) / (hi - lo));
+      });
+
+      // ─── HELPERS ──────────────────────────────────────────────────────────────────
+      function paleTint(hex, s) {
+        const c = d3.color(hex);
+        return d3
+          .rgb(
+            c.r + (255 - c.r) * s,
+            c.g + (255 - c.g) * s,
+            c.b + (255 - c.b) * s
+          )
+          .formatHex();
+      }
+
+      function dimFill(dimKey, i) {
+        const d = dims.find((x) => x.key === dimKey);
+        const norm = normScores[dimKey][i];
+        return d3.interpolateRgb(paleTint(d.color, 0.88), d.color)(norm);
+      }
+
+      // ─── BUILD SIDEBAR ─────────────────────────────────────────────────────────────
+      dims.forEach((d, j) => {
+        const row = document.createElement("div");
+        row.className = "dim-row";
+        row.dataset.key = d.key;
+        row.innerHTML = `
+    <div class="dim-chip" style="background:${d.color}"></div>
+    <span class="dim-name">${d.label}</span>
+    <span class="dim-ring">R${j + 1}</span>`;
+        document.getElementById("dim-list").appendChild(row);
+      });
+
+      dims.forEach((d) => {
+        const pale = paleTint(d.color, 0.88);
+        const row = document.createElement("div");
+        row.className = "scale-row";
+        row.innerHTML = `
+    <span class="scale-end">Lo</span>
+    <div class="scale-bar" style="background:linear-gradient(to right,${pale},${d.color})"></div>
+    <span class="scale-end">Hi</span>
+    <span class="scale-name" style="color:${d.color}">${d.label}</span>`;
+        document.getElementById("scale-legend").appendChild(row);
+      });
+
+      // ─── SVG SETUP ────────────────────────────────────────────────────────────────
+      const W = 960,
+        H = 780;
+      const cx = 482,
+        cy = 408;
+
+      // Geometry
+      const innerR = 50;
+      const outerR = 200;
+      const bandThick = outerR - innerR; // 195
+      const ringThick = bandThick / dims.length; // 32.5 each
+      const N = contexts.length; // 61
+
+      // 270° arc: opens at bottom, most fragile at left side (225°), least at right (135°)
+      const totalAngle = Math.PI * 1.5; // 270°
+      const angleStart = Math.PI * 0; // 225° = lower-left (d3: 0=top, CW)
+      const gapAngle = 0.01; // thin gap between countries
+      const segAngle = (totalAngle - N * gapAngle) / N;
+
+      const svg = d3.select("#snail-svg");
+      const arcGen = d3.arc();
+
+      // Background
+      svg
+        .append("rect")
+        .attr("width", W)
+        .attr("height", H)
+        .attr("fill", "#F4F1EC");
+
+      // ── Title ─────────────────────────────────────────────────────────────────────
+      svg
+        .append("text")
+        .attr("x", cx)
+        .attr("y", 36)
+        .attr("text-anchor", "middle")
+        .attr("font-family", "'Source Serif 4',serif")
+        .attr("font-size", 18)
+        .attr("font-weight", 600)
+        .attr("fill", "#1C1B22")
+        .text("The Fragility Snail · 2025");
+
+      svg
+        .append("text")
+        .attr("x", cx)
+        .attr("y", 54)
+        .attr("text-anchor", "middle")
+        .attr("font-family", "'IBM Plex Sans',sans-serif")
+        .attr("font-size", 10.5)
+        .attr("fill", "#999")
+        .text(
+          "61 fragile contexts · 6 dimensions · ordered most → least fragile"
+        );
+
+      // ── Center medallion ──────────────────────────────────────────────────────────
+      const cg = svg.append("g").attr("transform", `translate(${cx},${cy})`);
+      cg.append("circle")
+        .attr("r", innerR - 5)
+        .attr("fill", "#EDE9E3");
+      cg.append("circle")
+        .attr("r", innerR - 5)
+        .attr("fill", "none")
+        .attr("stroke", "#C5BDB2")
+        .attr("stroke-width", 1.5);
+      ["MOST", "FRAGILE"].forEach((w, i) => {
+        cg.append("text")
+          .attr("text-anchor", "middle")
+          .attr("y", (i - 0.5) * 13 + 4)
+          .attr("font-family", "'IBM Plex Sans',sans-serif")
+          .attr("font-size", 8.5)
+          .attr("font-weight", 600)
+          .attr("fill", "#888")
+          .attr("letter-spacing", "0.1em")
+          .text(w);
+      });
+
+      // ── Endpoint annotations ──────────────────────────────────────────────────────
+      const annoR = outerR + 60;
+      // Start: lower-left  (225°)
+      {
+        const ax = cx + annoR * Math.sin(angleStart - 0.08);
+        const ay = cy - annoR * Math.cos(angleStart - 0.08);
+        svg
+          .append("text")
+          .attr("x", ax)
+          .attr("y", ay)
+          .attr("text-anchor", "end")
+          .attr("font-family", "'IBM Plex Sans',sans-serif")
+          .attr("font-size", 9)
+          .attr("font-weight", 600)
+          .attr("fill", "#BF3A2B")
+          .attr("letter-spacing", "0.07em")
+          .text("← MOST FRAGILE");
+      }
+      // End: lower-right (135°, = angleStart + totalAngle)
+      {
+        const angleEnd = angleStart + totalAngle;
+        const ax = cx + annoR * Math.sin(angleEnd + 0.08);
+        const ay = cy - annoR * Math.cos(angleEnd + 0.08);
+        svg
+          .append("text")
+          .attr("x", ax)
+          .attr("y", ay)
+          .attr("text-anchor", "start")
+          .attr("font-family", "'IBM Plex Sans',sans-serif")
+          .attr("font-size", 9)
+          .attr("font-weight", 600)
+          .attr("fill", "#888")
+          .attr("letter-spacing", "0.07em")
+          .text("LEAST FRAGILE →");
+      }
+
+      // ── Draw segments ─────────────────────────────────────────────────────────────
+      const arcGroups = [];
+
+      contexts.forEach((ctx, i) => {
+        const t0 = angleStart + i * (segAngle + gapAngle);
+        const t1 = t0 + segAngle;
+        const tMid = (t0 + t1) / 2;
+
+        const g = svg.append("g").attr("class", "seg-group").attr("data-i", i);
+        const patches = [];
+
+        // 6 dim rings
+        dims.forEach((dim, j) => {
+          const rIn = innerR + j * ringThick;
+          const rOut = innerR + (j + 1) * ringThick;
+          const fill = dimFill(dim.key, i);
+
+          const path = g
+            .append("path")
+            .attr("transform", `translate(${cx},${cy})`)
+            .attr(
+              "d",
+              arcGen({
+                innerRadius: rIn,
+                outerRadius: rOut,
+                startAngle: t0,
+                endAngle: t1,
+              })
+            )
+            .attr("fill", fill)
+            .attr("stroke", "#F4F1EC")
+            .attr("stroke-width", 0.5);
+
+          patches.push({ path, dim, j, fill });
+        });
+
+        // Thin tier marker on inner edge
+        const tierCol = ctx.tier === "extreme" ? "#BF3A2B" : "#E07B39";
+        g.append("path")
+          .attr("transform", `translate(${cx},${cy})`)
+          .attr(
+            "d",
+            arcGen({
+              innerRadius: innerR - 8,
+              outerRadius: innerR - 2,
+              startAngle: t0,
+              endAngle: t1,
+            })
+          )
+          .attr("fill", tierCol)
+          .attr("opacity", 0.8);
+
+        // Ghost arc for hover
+        g.append("path")
+          .attr("transform", `translate(${cx},${cy})`)
+          .attr(
+            "d",
+            arcGen({
+              innerRadius: innerR - 9,
+              outerRadius: outerR + 3,
+              startAngle: t0,
+              endAngle: t1,
+            })
+          )
+          .attr("fill", "transparent")
+          .attr("cursor", "pointer")
+          .on("mousemove", (ev) => showTip(ev, ctx, i, patches))
+          .on("mouseleave", () => {
+            hideTip();
+            if (highlighted === null) resetAll();
+          })
+          .on("click", () => handleClick(i));
+
+        // ── Country name label ─────────────────────────────────────────────────────
+        const labelR = outerR + 12;
+        const lx = cx + labelR * Math.sin(tMid);
+        const ly = cy - labelR * Math.cos(tMid);
+
+        // Normalise tMid to [0°, 360°]
+        const tMidDeg = ((((tMid * 180) / Math.PI) % 360) + 360) % 360;
+        // Left half (>180°): flip text so it reads outward without being upside-down
+        const flip = tMidDeg > 180;
+        const rotDeg = tMidDeg - 90 + (flip ? 180 : 0);
+        const anchor = flip ? "end" : "start";
+
+        g.append("text")
+          .attr("class", "ctry-lbl")
+          .attr("transform", `translate(${lx},${ly}) rotate(${rotDeg})`)
+          .attr("text-anchor", anchor)
+          .attr("dominant-baseline", "middle")
+          .attr("font-family", "'IBM Plex Sans',sans-serif")
+          .attr("font-size", ctx.tier === "extreme" ? 8.0 : 7.4)
+          .attr("font-weight", ctx.tier === "extreme" ? 500 : 400)
+          .attr("fill", ctx.tier === "extreme" ? "#271010" : "#505060")
+          .style("pointer-events", "none")
+          .text(ctx.name);
+
+        arcGroups.push({ ctx, patches, g });
+      });
+
+      // ── Bottom ring legend ────────────────────────────────────────────────────────
+      const legY = H - 22;
+      const legW = dims.length * 110;
+      const legX0 = cx - legW / 2;
+      dims.forEach((d, j) => {
+        const lx = legX0 + j * 110;
+        svg
+          .append("rect")
+          .attr("x", lx)
+          .attr("y", legY - 9)
+          .attr("width", 9)
+          .attr("height", 9)
+          .attr("rx", 2)
+          .attr("fill", d.color);
+        svg
+          .append("text")
+          .attr("x", lx + 13)
+          .attr("y", legY - 1)
+          .attr("font-family", "'IBM Plex Sans',sans-serif")
+          .attr("font-size", 9.5)
+          .attr("fill", "#666")
+          .text(`R${j + 1} — ${d.label}`);
+      });
+
+      // ── STATE & INTERACTION ───────────────────────────────────────────────────────
+      let activeDim = null;
+      let highlighted = null;
+      const tt = document.getElementById("tt");
+
+      function showTip(ev, ctx, i, patches) {
+        // Dim all other segments
+        arcGroups.forEach((ag, j) => {
+          const fade = j !== i;
+          ag.patches.forEach(({ path }) =>
+            path.attr("opacity", fade ? 0.13 : 1)
+          );
+          ag.g.selectAll(".ctry-lbl").attr("fill-opacity", fade ? 0.15 : 1);
+        });
+
+        // Fill tooltip
+        document.getElementById("tt-name").textContent = ctx.name;
+        const tierEl = document.getElementById("tt-tier");
+        tierEl.textContent =
+          ctx.tier === "extreme" ? "Extreme Fragility" : "High Fragility";
+        tierEl.style.color = ctx.tier === "extreme" ? "#BF3A2B" : "#E07B39";
+        document.getElementById("tt-tv").textContent = ctx.overall + " / 100";
+
+        document.getElementById("tt-dims").innerHTML = dims
+          .map((d, j) => {
+            const fill = patches[j]?.fill || d.color;
+            return `<div class="tt-dr">
+      <span class="tt-dn">${d.label}</span>
+      <div class="tt-bg"><div class="tt-fill" style="width:${
+        ctx[d.key]
+      }%;background:${fill}"></div></div>
+      <span class="tt-dv">${ctx[d.key]}</span>
+    </div>`;
+          })
+          .join("");
+
+        // Position
+        const vw = window.innerWidth,
+          vh = window.innerHeight;
+        let x = ev.clientX + 14,
+          y = ev.clientY - 12;
+        if (x + 240 > vw) x = ev.clientX - 244;
+        if (y + 280 > vh) y = vh - 285;
+        tt.style.left = x + "px";
+        tt.style.top = y + "px";
+        tt.classList.add("on");
+      }
+
+      function hideTip() {
+        tt.classList.remove("on");
+      }
+
+      function resetAll() {
+        arcGroups.forEach((ag) => {
+          ag.patches.forEach(({ path, dim, j }) => {
+            const fade = activeDim && dim.key !== activeDim;
+            path.attr("opacity", fade ? 0.07 : 1);
+          });
+          ag.g.selectAll(".ctry-lbl").attr("fill-opacity", 1);
+        });
+      }
+
+      function handleClick(i) {
+        if (highlighted === i) {
+          highlighted = null;
+          resetAll();
+          return;
+        }
+        highlighted = i;
+        arcGroups.forEach((ag, j) => {
+          const fade = j !== i;
+          ag.patches.forEach(({ path }) =>
+            path.attr("opacity", fade ? 0.1 : 1)
+          );
+          ag.g.selectAll(".ctry-lbl").attr("fill-opacity", fade ? 0.12 : 1);
+        });
+      }
+
+      // Dimension filter
+      document.querySelectorAll(".dim-row").forEach((el) => {
+        el.addEventListener("click", () => {
+          const k = el.dataset.key;
+          activeDim = activeDim === k ? null : k;
+          highlighted = null;
+          document.querySelectorAll(".dim-row").forEach((e) => {
+            e.classList.toggle(
+              "faded",
+              !!activeDim && e.dataset.key !== activeDim
+            );
+            e.classList.toggle("active", e.dataset.key === activeDim);
+          });
+          resetAll();
+        });
+      });
+
+      // Search
+      document.getElementById("search").addEventListener("input", function () {
+        const q = this.value.toLowerCase().trim();
+        if (!q) {
+          highlighted = null;
+          resetAll();
+          return;
+        }
+        const idx = contexts.findIndex((c) => c.name.toLowerCase().includes(q));
+        if (idx >= 0) handleClick(idx);
+        else {
+          highlighted = null;
+          resetAll();
+        }
+      });
+
+      // ── Entrance animation ─────────────────────────────────────────────────────────
+      arcGroups.forEach(({ patches }, i) => {
+        patches.forEach(({ path }, j) => {
+          path
+            .attr("opacity", 0)
+            .transition()
+            .delay(i * 16 + j * 4)
+            .duration(500)
+            .ease(d3.easeCubicOut)
+            .attr("opacity", 1);
+        });
+      });
+    </script>
+  </body>
+</html>
