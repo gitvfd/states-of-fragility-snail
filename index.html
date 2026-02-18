@@ -162,6 +162,17 @@
         align-items: center;
         gap: 5px;
         margin-bottom: 4px;
+        cursor: pointer;
+        transition: opacity 0.15s;
+      }
+      .scale-row:hover {
+        opacity: 0.7;
+      }
+      .scale-row.active {
+        opacity: 1;
+      }
+      .scale-row.faded {
+        opacity: 0.28;
       }
       .scale-bar {
         flex: 1;
@@ -170,12 +181,12 @@
         overflow: hidden;
       }
       .scale-end {
-        font-size: 8.5px;
+        font-size: 12px;
         color: var(--muted);
         white-space: nowrap;
       }
       .scale-name {
-        font-size: 9.5px;
+        font-size: 12px;
         font-weight: 500;
         width: 76px;
       }
@@ -284,8 +295,8 @@
         position: absolute;
         font-family: "Noto Sans Display", sans-serif;
         font-size: 10px;
-        top: 20px;
-        left: 20px;
+        top: 40px;
+        left: 40px;
         background: var(--panel);
         border: 1px solid var(--border);
         border-radius: 8px;
@@ -410,20 +421,13 @@
         </div>
 
         <hr />
-
-        <div>
-          <div class="sec-label">Dimensions (inner → outer)</div>
-          <div class="dim-list" id="dim-list"></div>
-        </div>
-
-        <hr />
         <!--
         <div id="scale-legend-block">
           <div class="sec-label">Colour intensity</div>
           <div id="scale-legend"></div>
           <p style="margin-top: 6px">
             Normalised within dataset. Pale = best-performing in set; saturated
-            = worst.
+            = worst. Click  a serie to sort by that dimension.
           </p>
         </div>
         -->
@@ -483,7 +487,7 @@
           <div id="scale-legend"></div>
           <p style="margin-top: 6px">
             Normalised within dataset. Pale = best-performing in set; saturated
-            = worst.
+            = worst. Click a serie to sort by that dimension.
           </p>
         </div>
       </div>
@@ -1204,22 +1208,12 @@
         return d3.interpolateRgb(paleTint(d.color, 0.88), d.color)(norm);
       }
 
-      // ─── BUILD SIDEBAR ─────────────────────────────────────────────────────────────
-      dims.forEach((d, j) => {
-        const row = document.createElement("div");
-        row.className = "dim-row";
-        row.dataset.key = d.key;
-        row.innerHTML = `
-      <div class="dim-chip" style="background:${d.color}"></div>
-      <span class="dim-name">${d.label}</span>
-      <span class="dim-ring">R${j + 1}</span>`;
-        document.getElementById("dim-list").appendChild(row);
-      });
-
-      dims.forEach((d) => {
+      // ─── BUILD SCALE LEGEND ────────────────────────────────────────────────────────
+      [...dims].reverse().forEach((d) => {
         const pale = paleTint(d.color, 0.88);
         const row = document.createElement("div");
         row.className = "scale-row";
+        row.dataset.key = d.key;
         row.innerHTML = `
       <span class="scale-end">Low</span>
       <div class="scale-bar" style="background:linear-gradient(to right,${pale},${d.color})"></div>
@@ -1227,6 +1221,127 @@
       <span class="scale-name" style="color:${d.color}">${d.label}</span>`;
         document.getElementById("scale-legend").appendChild(row);
       });
+
+      // ─── SORTING & REDRAW ─────────────────────────────────────────────────────────
+      let sortByDim = null; // Track which dimension we're sorting by
+      let arcGroups = []; // Will hold arc group data
+
+      function redrawVisualization() {
+        // Clear previous SVG content except background
+        d3.selectAll(".seg-group").remove();
+        arcGroups = [];
+
+        // Create a sorted copy of contexts
+        let sortedContexts = [...contexts];
+        if (sortByDim) {
+          sortedContexts.sort((a, b) => b[sortByDim] - a[sortByDim]);
+        } else {
+          sortedContexts.sort((a, b) => b.overall - a.overall);
+        }
+
+        // Redraw segments in new order
+        sortedContexts.forEach((ctx, i) => {
+          drawSegment(ctx, i, sortedContexts);
+        });
+      }
+
+      function drawSegment(ctx, i, sortedContexts) {
+        const t0 = angleStart + i * (segAngle + gapAngle);
+        const t1 = t0 + segAngle;
+        const tMid = (t0 + t1) / 2;
+
+        const g = svg.append("g").attr("class", "seg-group").attr("data-i", i);
+        const patches = [];
+
+        // Find original index for color calculation
+        const origIndex = contexts.indexOf(ctx);
+
+        // 6 dim rings
+        dims.forEach((dim, j) => {
+          const rIn = innerR + j * ringThick;
+          const rOut = innerR + (j + 1) * ringThick;
+          const fill = dimFill(dim.key, origIndex);
+
+          const path = g
+            .append("path")
+            .attr("transform", `translate(${cx},${cy})`)
+            .attr(
+              "d",
+              arcGen({
+                innerRadius: rIn,
+                outerRadius: rOut,
+                startAngle: t0,
+                endAngle: t1,
+              }),
+            )
+            .attr("fill", fill)
+            .attr("stroke", "#FFFFFF")
+            .attr("stroke-width", 0.5);
+
+          patches.push({ path, dim, j, fill });
+        });
+
+        // Thin tier marker on inner edge
+        const tierCol = ctx.tier === "extreme" ? "#BF3A2B" : "#E07B39";
+        g.append("path")
+          .attr("transform", `translate(${cx},${cy})`)
+          .attr(
+            "d",
+            arcGen({
+              innerRadius: innerR - 8,
+              outerRadius: innerR - 2,
+              startAngle: t0,
+              endAngle: t1,
+            }),
+          )
+          .attr("fill", tierCol)
+          .attr("opacity", 0.8);
+
+        // Ghost arc for hover
+        g.append("path")
+          .attr("transform", `translate(${cx},${cy})`)
+          .attr(
+            "d",
+            arcGen({
+              innerRadius: innerR - 9,
+              outerRadius: outerR + 3,
+              startAngle: t0,
+              endAngle: t1,
+            }),
+          )
+          .attr("fill", "transparent")
+          .attr("cursor", "pointer")
+          .on("mousemove", (ev) => showTip(ev, ctx, i, patches))
+          .on("mouseleave", () => {
+            hideTip();
+            if (highlighted === null) resetAll();
+          })
+          .on("click", () => handleClick(i));
+
+        // ── Country name label
+        const labelR = outerR + 12;
+        const lx = cx + labelR * Math.sin(tMid);
+        const ly = cy - labelR * Math.cos(tMid);
+
+        const tMidDeg = ((((tMid * 180) / Math.PI) % 360) + 360) % 360;
+        const flip = tMidDeg > 180;
+        const rotDeg = tMidDeg - 90 + (flip ? 180 : 0);
+        const anchor = flip ? "end" : "start";
+
+        g.append("text")
+          .attr("class", "ctry-lbl")
+          .attr("transform", `translate(${lx},${ly}) rotate(${rotDeg})`)
+          .attr("text-anchor", anchor)
+          .attr("dominant-baseline", "middle")
+          .attr("font-family", "'Noto Sans Display',sans-serif")
+          .attr("font-size", ctx.tier === "extreme" ? 14.0 : 11.0)
+          .attr("font-weight", ctx.tier === "extreme" ? 500 : 400)
+          .attr("fill", ctx.tier === "extreme" ? "#271010" : "#505060")
+          .style("pointer-events", "none")
+          .text(ctx.name);
+
+        arcGroups.push({ ctx, patches, g });
+      }
 
       // ─── SVG SETUP ────────────────────────────────────────────────────────────────
       const W = 750,
@@ -1286,18 +1401,18 @@
       const cg = svg.append("g").attr("transform", `translate(${cx},${cy})`);
       cg.append("circle")
         .attr("r", innerR - 5)
-        .attr("fill", "#EDE9E3");
+        .attr("fill", "#FFFFFF");
       cg.append("circle")
         .attr("r", innerR - 5)
         .attr("fill", "none")
-        .attr("stroke", "#C5BDB2")
+        .attr("stroke", "#FFFFFF")
         .attr("stroke-width", 1.5);
       ["MOST", "FRAGILE"].forEach((w, i) => {
         cg.append("text")
           .attr("text-anchor", "middle")
           .attr("y", (i - 0.5) * 13 + 4)
           .attr("font-family", "'Noto Sans Displays',sans-serif")
-          .attr("font-size", 8.5)
+          .attr("font-size", 9.5)
           .attr("font-weight", 600)
           .attr("fill", "#888")
           .attr("letter-spacing", "0.1em")
@@ -1340,106 +1455,8 @@
           .text("LEAST FRAGILE →");
       }
 **/
-      // ── Draw segments ─────────────────────────────────────────────────────────────
-      const arcGroups = [];
-
-      contexts.forEach((ctx, i) => {
-        const t0 = angleStart + i * (segAngle + gapAngle);
-        const t1 = t0 + segAngle;
-        const tMid = (t0 + t1) / 2;
-
-        const g = svg.append("g").attr("class", "seg-group").attr("data-i", i);
-        const patches = [];
-
-        // 6 dim rings
-        dims.forEach((dim, j) => {
-          const rIn = innerR + j * ringThick;
-          const rOut = innerR + (j + 1) * ringThick;
-          const fill = dimFill(dim.key, i);
-
-          const path = g
-            .append("path")
-            .attr("transform", `translate(${cx},${cy})`)
-            .attr(
-              "d",
-              arcGen({
-                innerRadius: rIn,
-                outerRadius: rOut,
-                startAngle: t0,
-                endAngle: t1,
-              }),
-            )
-            .attr("fill", fill)
-            //.attr("stroke", "#F4F1EC")
-            .attr("stroke", "#FFFFFF")
-            .attr("stroke-width", 0.5);
-
-          patches.push({ path, dim, j, fill });
-        });
-
-        // Thin tier marker on inner edge
-        const tierCol = ctx.tier === "extreme" ? "#BF3A2B" : "#E07B39";
-        g.append("path")
-          .attr("transform", `translate(${cx},${cy})`)
-          .attr(
-            "d",
-            arcGen({
-              innerRadius: innerR - 8,
-              outerRadius: innerR - 2,
-              startAngle: t0,
-              endAngle: t1,
-            }),
-          )
-          .attr("fill", tierCol)
-          .attr("opacity", 0.8);
-
-        // Ghost arc for hover
-        g.append("path")
-          .attr("transform", `translate(${cx},${cy})`)
-          .attr(
-            "d",
-            arcGen({
-              innerRadius: innerR - 9,
-              outerRadius: outerR + 3,
-              startAngle: t0,
-              endAngle: t1,
-            }),
-          )
-          .attr("fill", "transparent")
-          .attr("cursor", "pointer")
-          .on("mousemove", (ev) => showTip(ev, ctx, i, patches))
-          .on("mouseleave", () => {
-            hideTip();
-            if (highlighted === null) resetAll();
-          })
-          .on("click", () => handleClick(i));
-
-        // ── Country name label ─────────────────────────────────────────────────────
-        const labelR = outerR + 12;
-        const lx = cx + labelR * Math.sin(tMid);
-        const ly = cy - labelR * Math.cos(tMid);
-
-        // Normalise tMid to [0°, 360°]
-        const tMidDeg = ((((tMid * 180) / Math.PI) % 360) + 360) % 360;
-        // Left half (>180°): flip text so it reads outward without being upside-down
-        const flip = tMidDeg > 180;
-        const rotDeg = tMidDeg - 90 + (flip ? 180 : 0);
-        const anchor = flip ? "end" : "start";
-
-        g.append("text")
-          .attr("class", "ctry-lbl")
-          .attr("transform", `translate(${lx},${ly}) rotate(${rotDeg})`)
-          .attr("text-anchor", anchor)
-          .attr("dominant-baseline", "middle")
-          .attr("font-family", "'Noto Sans Display',sans-serif")
-          .attr("font-size", ctx.tier === "extreme" ? 12.0 : 9.0)
-          .attr("font-weight", ctx.tier === "extreme" ? 500 : 400)
-          .attr("fill", ctx.tier === "extreme" ? "#271010" : "#505060")
-          .style("pointer-events", "none")
-          .text(ctx.name);
-
-        arcGroups.push({ ctx, patches, g });
-      });
+      // Initial draw
+      redrawVisualization();
 
       // ── Bottom ring legend ────────────────────────────────────────────────────────
       /** const legY = H - 22;
@@ -1545,19 +1562,31 @@
       }
 
       // Dimension filter
-      document.querySelectorAll(".dim-row").forEach((el) => {
+      const handleDimensionClick = (key) => {
+        activeDim = activeDim === key ? null : key;
+        sortByDim = activeDim; // Update sort dimension
+        highlighted = null;
+        document.querySelectorAll(".dim-row").forEach((e) => {
+          e.classList.toggle(
+            "faded",
+            !!activeDim && e.dataset.key !== activeDim,
+          );
+          e.classList.toggle("active", e.dataset.key === activeDim);
+        });
+        document.querySelectorAll(".scale-row").forEach((e) => {
+          e.classList.toggle(
+            "faded",
+            !!activeDim && e.dataset.key !== activeDim,
+          );
+          e.classList.toggle("active", e.dataset.key === activeDim);
+        });
+        redrawVisualization(); // Redraw with new sort order
+        resetAll();
+      };
+
+      document.querySelectorAll(".scale-row").forEach((el) => {
         el.addEventListener("click", () => {
-          const k = el.dataset.key;
-          activeDim = activeDim === k ? null : k;
-          highlighted = null;
-          document.querySelectorAll(".dim-row").forEach((e) => {
-            e.classList.toggle(
-              "faded",
-              !!activeDim && e.dataset.key !== activeDim,
-            );
-            e.classList.toggle("active", e.dataset.key === activeDim);
-          });
-          resetAll();
+          handleDimensionClick(el.dataset.key);
         });
       });
 
