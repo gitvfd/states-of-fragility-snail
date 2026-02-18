@@ -1173,12 +1173,12 @@
 
       // ─── DIMENSIONS ───────────────────────────────────────────────────────────────
       const dims = [
-        { key: "eco", label: "Economic", color: "#C8860A" },
-        { key: "env", label: "Environmental", color: "#3D8A52" },
-        { key: "hum", label: "Human", color: "#6B4DAE" },
-        { key: "pol", label: "Political", color: "#1A5FA3" },
-        { key: "sec", label: "Security", color: "#BF3A2B" },
-        { key: "soc", label: "Societal", color: "#C5621E" },
+        { key: "soc", label: "Societal", color: "#464E70" },
+        { key: "sec", label: "Security", color: "#F2AE00" },
+        { key: "pol", label: "Political", color: "#9D2EBD" },
+        { key: "hum", label: "Human", color: "#C63963" },
+        { key: "env", label: "Environmental", color: "#46AEA7" },
+        { key: "eco", label: "Economic", color: "#7A473E" },
       ];
 
       // Per-dimension normalisation within dataset → [0,1]
@@ -1506,9 +1506,11 @@
         tierEl.style.color = ctx.tier === "extreme" ? "#BF3A2B" : "#E07B39";
         document.getElementById("tt-tv").textContent = ctx.overall + " / 100";
 
-        document.getElementById("tt-dims").innerHTML = dims
-          .map((d, j) => {
-            const fill = patches[j]?.fill || d.color;
+        document.getElementById("tt-dims").innerHTML = [...dims]
+          .reverse()
+          .map((d) => {
+            const patch = patches.find((p) => p.dim.key === d.key);
+            const fill = patch?.fill || d.color;
             return `<div class="tt-dr">
         <span class="tt-dn">${d.label}</span>
         <div class="tt-bg"><div class="tt-fill" style="width:${
