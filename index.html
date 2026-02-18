@@ -175,7 +175,7 @@
         white-space: nowrap;
       }
       .scale-name {
-        font-size: 8.5px;
+        font-size: 9.5px;
         font-weight: 500;
         width: 76px;
       }
@@ -282,6 +282,8 @@
 
       #scale-legend-block {
         position: absolute;
+        font-family: "Noto Sans Display", sans-serif;
+        font-size: 10px;
         top: 20px;
         left: 20px;
         background: var(--panel);
@@ -299,15 +301,15 @@
         pointer-events: none;
         z-index: 200;
         width: 226px;
-        background: #1c1b22;
-        color: #fff;
+        background: #ffffff;
+        color: #000000;
         border-radius: 8px;
         padding: 12px 14px 11px;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.36);
         font-size: 11.5px;
         opacity: 0;
         transition: opacity 0.12s;
-        border-top: 3px solid #bf3a2b;
+        border-top: 3px solid #101d40;
       }
       #tt.on {
         opacity: 1;
@@ -1219,9 +1221,9 @@
         const row = document.createElement("div");
         row.className = "scale-row";
         row.innerHTML = `
-      <span class="scale-end">Lo</span>
+      <span class="scale-end">Low</span>
       <div class="scale-bar" style="background:linear-gradient(to right,${pale},${d.color})"></div>
-      <span class="scale-end">Hi</span>
+      <span class="scale-end">High</span>
       <span class="scale-name" style="color:${d.color}">${d.label}</span>`;
         document.getElementById("scale-legend").appendChild(row);
       });
