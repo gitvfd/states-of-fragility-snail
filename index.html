@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -6,12 +6,12 @@
     <title>States of Fragility — Snail</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <link
-      href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+Display:wdth,wght@87.5,100..900&display=swap"
       rel="stylesheet"
     />
     <style>
       :root {
-        --bg: #f4f1ec;
+        --bg: #ffffff; /**#f4f1ec;**/
         --panel: #ffffff;
         --text: #1c1b22;
         --muted: #8a8898;
@@ -23,7 +23,7 @@
         padding: 0;
       }
       body {
-        font-family: "IBM Plex Sans", sans-serif;
+        font-family: "Noto Sans Display", sans-serif;
         background: var(--bg);
         color: var(--text);
         min-height: 100vh;
@@ -38,7 +38,7 @@
         border-bottom: 3px solid #bf3a2b;
       }
       .logo {
-        font-family: "Source Serif 4", serif;
+        font-family: "Noto Sans Display", sans-serif;
         font-size: 17px;
         font-weight: 600;
         color: #fff;
@@ -66,31 +66,41 @@
         display: flex;
         flex: 1;
         overflow: hidden;
+        flex-direction: column;
       }
 
-      /* Sidebar */
+      /* Top Bar */
       .sidebar {
-        width: 228px;
+        width: 100%;
         flex-shrink: 0;
         background: var(--panel);
-        border-right: 1px solid var(--border);
-        padding: 20px 15px;
+        border-bottom: 1px solid var(--border);
+        padding: 15px 20px;
         display: flex;
-        flex-direction: column;
-        gap: 18px;
-        overflow-y: auto;
+        flex-direction: row;
+        gap: 30px;
+        align-items: flex-start;
+        overflow-x: auto;
+        overflow-y: hidden;
       }
       .sidebar h2 {
-        font-family: "Source Serif 4", serif;
+        font-family: "Noto Sans Display", sans-serif;
         font-size: 14px;
         font-weight: 600;
         line-height: 1.4;
+      }
+      .sidebar > div:not(.search-wrap) {
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
       }
       .sidebar p {
         font-size: 11px;
         color: var(--muted);
         line-height: 1.6;
         margin-top: 5px;
+        max-width: 280px;
       }
       .sec-label {
         font-size: 9.5px;
@@ -99,16 +109,19 @@
         letter-spacing: 0.1em;
         color: var(--muted);
         margin-bottom: 8px;
+        white-space: nowrap;
       }
       hr {
         border: none;
-        border-top: 1px solid var(--border);
+        border-left: 1px solid var(--border);
+        height: 40px;
+        margin: 0;
       }
 
       .dim-list {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 2px;
       }
       .dim-row {
         display: flex;
@@ -204,7 +217,7 @@
         padding: 9px 9px 7px;
       }
       .stat-val {
-        font-family: "Source Serif 4", serif;
+        font-family: "Noto Sans Display", sans-serif;
         font-size: 19px;
         font-weight: 600;
         line-height: 1;
@@ -223,10 +236,13 @@
       .search-wrap {
         position: relative;
       }
+      .search-wrap {
+        flex-shrink: 0;
+      }
       .search-wrap input {
-        font-family: "IBM Plex Sans", sans-serif;
+        font-family: "Noto Sans Display", sans-serif;
         font-size: 11.5px;
-        width: 100%;
+        width: 200px;
         padding: 6px 28px 6px 11px;
         border: 1px solid var(--border);
         border-radius: 20px;
@@ -256,11 +272,25 @@
         justify-content: center;
         overflow: hidden;
         padding: 8px;
+        position: relative;
       }
       #snail-svg {
         display: block;
         max-width: 100%;
         max-height: 100%;
+      }
+
+      #scale-legend-block {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px 16px;
+        max-width: 280px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        z-index: 10;
       }
 
       /* Tooltip */
@@ -283,7 +313,7 @@
         opacity: 1;
       }
       #tt .tt-name {
-        font-family: "Source Serif 4", serif;
+        font-family: "Noto Sans Display", sans-serif;
         font-size: 14px;
         font-weight: 600;
         margin-bottom: 1px;
@@ -343,14 +373,14 @@
         opacity: 0.5;
       }
       #tt .tt-tv {
-        font-family: "Source Serif 4", serif;
+        font-family: "Noto Sans Display", sans-serif;
         font-size: 17px;
         font-weight: 600;
       }
     </style>
   </head>
   <body>
-    <header>
+    <!--<header>
       <div>
         <div class="logo">States of <em>Fragility</em></div>
         <div class="logo-sub">
@@ -358,7 +388,7 @@
         </div>
       </div>
       <div class="oecd-badge">OECD</div>
-    </header>
+    </header>-->
 
     <div class="page">
       <!-- SIDEBAR -->
@@ -385,8 +415,8 @@
         </div>
 
         <hr />
-
-        <div>
+        <!--
+        <div id="scale-legend-block">
           <div class="sec-label">Colour intensity</div>
           <div id="scale-legend"></div>
           <p style="margin-top: 6px">
@@ -394,7 +424,8 @@
             = worst.
           </p>
         </div>
-
+        -->
+        <!--
         <hr />
 
         <div>
@@ -435,7 +466,7 @@
               <div class="stat-lbl">Extreme poor</div>
             </div>
           </div>
-        </div>
+        </div>-->
       </div>
 
       <!-- CHART -->
@@ -445,6 +476,14 @@
           viewBox="0 0 960 780"
           xmlns="http://www.w3.org/2000/svg"
         ></svg>
+        <div id="scale-legend-block">
+          <div class="sec-label">Colour intensity</div>
+          <div id="scale-legend"></div>
+          <p style="margin-top: 6px">
+            Normalised within dataset. Pale = best-performing in set; saturated
+            = worst.
+          </p>
+        </div>
       </div>
     </div>
 
@@ -1152,7 +1191,7 @@
           .rgb(
             c.r + (255 - c.r) * s,
             c.g + (255 - c.g) * s,
-            c.b + (255 - c.b) * s
+            c.b + (255 - c.b) * s,
           )
           .formatHex();
       }
@@ -1169,9 +1208,9 @@
         row.className = "dim-row";
         row.dataset.key = d.key;
         row.innerHTML = `
-    <div class="dim-chip" style="background:${d.color}"></div>
-    <span class="dim-name">${d.label}</span>
-    <span class="dim-ring">R${j + 1}</span>`;
+      <div class="dim-chip" style="background:${d.color}"></div>
+      <span class="dim-name">${d.label}</span>
+      <span class="dim-ring">R${j + 1}</span>`;
         document.getElementById("dim-list").appendChild(row);
       });
 
@@ -1180,22 +1219,22 @@
         const row = document.createElement("div");
         row.className = "scale-row";
         row.innerHTML = `
-    <span class="scale-end">Lo</span>
-    <div class="scale-bar" style="background:linear-gradient(to right,${pale},${d.color})"></div>
-    <span class="scale-end">Hi</span>
-    <span class="scale-name" style="color:${d.color}">${d.label}</span>`;
+      <span class="scale-end">Lo</span>
+      <div class="scale-bar" style="background:linear-gradient(to right,${pale},${d.color})"></div>
+      <span class="scale-end">Hi</span>
+      <span class="scale-name" style="color:${d.color}">${d.label}</span>`;
         document.getElementById("scale-legend").appendChild(row);
       });
 
       // ─── SVG SETUP ────────────────────────────────────────────────────────────────
-      const W = 960,
-        H = 780;
+      const W = 750,
+        H = 750;
       const cx = 482,
-        cy = 408;
+        cy = 375;
 
       // Geometry
-      const innerR = 50;
-      const outerR = 200;
+      const innerR = 75;
+      const outerR = 275;
       const bandThick = outerR - innerR; // 195
       const ringThick = bandThick / dims.length; // 32.5 each
       const N = contexts.length; // 61
@@ -1214,15 +1253,16 @@
         .append("rect")
         .attr("width", W)
         .attr("height", H)
-        .attr("fill", "#F4F1EC");
+        //.attr("fill", "#F4F1EC");
+        .attr("fill", "#FFFFFF");
 
       // ── Title ─────────────────────────────────────────────────────────────────────
-      svg
+      /*      svg
         .append("text")
         .attr("x", cx)
         .attr("y", 36)
         .attr("text-anchor", "middle")
-        .attr("font-family", "'Source Serif 4',serif")
+        .attr("font-family", "'Noto Sans Display',sans-serif")
         .attr("font-size", 18)
         .attr("font-weight", 600)
         .attr("fill", "#1C1B22")
@@ -1233,13 +1273,13 @@
         .attr("x", cx)
         .attr("y", 54)
         .attr("text-anchor", "middle")
-        .attr("font-family", "'IBM Plex Sans',sans-serif")
+        .attr("font-family", "'Noto Sans Display',sans-serif")
         .attr("font-size", 10.5)
         .attr("fill", "#999")
         .text(
-          "61 fragile contexts · 6 dimensions · ordered most → least fragile"
+          "61 fragile contexts · 6 dimensions · ordered most → least fragile",
         );
-
+*/
       // ── Center medallion ──────────────────────────────────────────────────────────
       const cg = svg.append("g").attr("transform", `translate(${cx},${cy})`);
       cg.append("circle")
@@ -1254,7 +1294,7 @@
         cg.append("text")
           .attr("text-anchor", "middle")
           .attr("y", (i - 0.5) * 13 + 4)
-          .attr("font-family", "'IBM Plex Sans',sans-serif")
+          .attr("font-family", "'Noto Sans Displays',sans-serif")
           .attr("font-size", 8.5)
           .attr("font-weight", 600)
           .attr("fill", "#888")
@@ -1263,7 +1303,7 @@
       });
 
       // ── Endpoint annotations ──────────────────────────────────────────────────────
-      const annoR = outerR + 60;
+      /**  const annoR = outerR + 60;
       // Start: lower-left  (225°)
       {
         const ax = cx + annoR * Math.sin(angleStart - 0.08);
@@ -1273,7 +1313,7 @@
           .attr("x", ax)
           .attr("y", ay)
           .attr("text-anchor", "end")
-          .attr("font-family", "'IBM Plex Sans',sans-serif")
+          .attr("font-family", "'Noto Sans Display',sans-serif")
           .attr("font-size", 9)
           .attr("font-weight", 600)
           .attr("fill", "#BF3A2B")
@@ -1290,14 +1330,14 @@
           .attr("x", ax)
           .attr("y", ay)
           .attr("text-anchor", "start")
-          .attr("font-family", "'IBM Plex Sans',sans-serif")
+          .attr("font-family", "'Noto Sans Display',sans-serif")
           .attr("font-size", 9)
           .attr("font-weight", 600)
           .attr("fill", "#888")
           .attr("letter-spacing", "0.07em")
           .text("LEAST FRAGILE →");
       }
-
+**/
       // ── Draw segments ─────────────────────────────────────────────────────────────
       const arcGroups = [];
 
@@ -1325,10 +1365,11 @@
                 outerRadius: rOut,
                 startAngle: t0,
                 endAngle: t1,
-              })
+              }),
             )
             .attr("fill", fill)
-            .attr("stroke", "#F4F1EC")
+            //.attr("stroke", "#F4F1EC")
+            .attr("stroke", "#FFFFFF")
             .attr("stroke-width", 0.5);
 
           patches.push({ path, dim, j, fill });
@@ -1345,7 +1386,7 @@
               outerRadius: innerR - 2,
               startAngle: t0,
               endAngle: t1,
-            })
+            }),
           )
           .attr("fill", tierCol)
           .attr("opacity", 0.8);
@@ -1360,7 +1401,7 @@
               outerRadius: outerR + 3,
               startAngle: t0,
               endAngle: t1,
-            })
+            }),
           )
           .attr("fill", "transparent")
           .attr("cursor", "pointer")
@@ -1388,8 +1429,8 @@
           .attr("transform", `translate(${lx},${ly}) rotate(${rotDeg})`)
           .attr("text-anchor", anchor)
           .attr("dominant-baseline", "middle")
-          .attr("font-family", "'IBM Plex Sans',sans-serif")
-          .attr("font-size", ctx.tier === "extreme" ? 8.0 : 7.4)
+          .attr("font-family", "'Noto Sans Display',sans-serif")
+          .attr("font-size", ctx.tier === "extreme" ? 12.0 : 9.0)
           .attr("font-weight", ctx.tier === "extreme" ? 500 : 400)
           .attr("fill", ctx.tier === "extreme" ? "#271010" : "#505060")
           .style("pointer-events", "none")
@@ -1399,7 +1440,7 @@
       });
 
       // ── Bottom ring legend ────────────────────────────────────────────────────────
-      const legY = H - 22;
+      /** const legY = H - 22;
       const legW = dims.length * 110;
       const legX0 = cx - legW / 2;
       dims.forEach((d, j) => {
@@ -1416,12 +1457,13 @@
           .append("text")
           .attr("x", lx + 13)
           .attr("y", legY - 1)
-          .attr("font-family", "'IBM Plex Sans',sans-serif")
+          .attr("font-family", "'Noto Sans Display',sans-serif")
           .attr("font-size", 9.5)
           .attr("fill", "#666")
-          .text(`R${j + 1} — ${d.label}`);
+          .text(`${d.label}`);
+        //.text(`R${j + 1} — ${d.label}`);
       });
-
+**/
       // ── STATE & INTERACTION ───────────────────────────────────────────────────────
       let activeDim = null;
       let highlighted = null;
@@ -1432,7 +1474,7 @@
         arcGroups.forEach((ag, j) => {
           const fade = j !== i;
           ag.patches.forEach(({ path }) =>
-            path.attr("opacity", fade ? 0.13 : 1)
+            path.attr("opacity", fade ? 0.13 : 1),
           );
           ag.g.selectAll(".ctry-lbl").attr("fill-opacity", fade ? 0.15 : 1);
         });
@@ -1449,12 +1491,12 @@
           .map((d, j) => {
             const fill = patches[j]?.fill || d.color;
             return `<div class="tt-dr">
-      <span class="tt-dn">${d.label}</span>
-      <div class="tt-bg"><div class="tt-fill" style="width:${
-        ctx[d.key]
-      }%;background:${fill}"></div></div>
-      <span class="tt-dv">${ctx[d.key]}</span>
-    </div>`;
+        <span class="tt-dn">${d.label}</span>
+        <div class="tt-bg"><div class="tt-fill" style="width:${
+          ctx[d.key]
+        }%;background:${fill}"></div></div>
+        <span class="tt-dv">${ctx[d.key]}</span>
+      </div>`;
           })
           .join("");
 
@@ -1494,7 +1536,7 @@
         arcGroups.forEach((ag, j) => {
           const fade = j !== i;
           ag.patches.forEach(({ path }) =>
-            path.attr("opacity", fade ? 0.1 : 1)
+            path.attr("opacity", fade ? 0.1 : 1),
           );
           ag.g.selectAll(".ctry-lbl").attr("fill-opacity", fade ? 0.12 : 1);
         });
@@ -1509,7 +1551,7 @@
           document.querySelectorAll(".dim-row").forEach((e) => {
             e.classList.toggle(
               "faded",
-              !!activeDim && e.dataset.key !== activeDim
+              !!activeDim && e.dataset.key !== activeDim,
             );
             e.classList.toggle("active", e.dataset.key === activeDim);
           });
