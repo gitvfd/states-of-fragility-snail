@@ -1,0 +1,61 @@
+name	iso3	tier	overall	eco	env	hum	pol	sec	soc
+Sudan	SDN	extreme	95	95	82	93	97	97	92
+Yemen	YEM	extreme	93	94	75	92	95	95	90
+Somalia	SOM	extreme	92	90	79	94	93	96	89
+Afghanistan	AFG	extreme	91	88	72	91	92	93	92
+South Sudan	SSD	extreme	90	91	76	93	90	94	88
+C. African Rep.	CAF	extreme	88	86	67	90	88	92	87
+DR Congo	COD	extreme	87	84	70	89	88	93	85
+Syria	SYR	extreme	86	87	68	85	90	89	82
+Haiti	HTI	extreme	86	84	83	85	88	90	83
+Mali	MLI	extreme	84	82	78	87	84	91	82
+Burkina Faso	BFA	extreme	83	80	77	84	82	90	81
+Myanmar	MMR	extreme	83	79	70	81	90	88	80
+Libya	LBY	extreme	82	73	62	78	92	89	79
+Niger	NER	extreme	81	79	81	84	77	85	78
+Eritrea	ERI	extreme	80	77	65	82	81	80	78
+Guinea-Bissau	GNB	extreme	79	76	62	80	79	75	77
+Palestine	PSE	extreme	79	82	72	78	80	86	76
+Venezuela	VEN	extreme	78	84	58	78	80	80	70
+Chad	TCD	high	77	75	79	80	77	82	75
+Iraq	IRQ	high	76	68	70	72	80	84	74
+Ethiopia	ETH	high	75	72	74	77	76	80	70
+Nigeria	NGA	high	74	68	68	72	70	82	68
+Pakistan	PAK	high	73	70	72	74	74	78	68
+Mozambique	MOZ	high	72	70	76	77	72	74	68
+Congo Rep.	COG	high	71	68	62	73	72	74	67
+Zimbabwe	ZWE	high	71	74	68	72	74	68	70
+Guinea	GIN	high	70	68	63	73	72	67	68
+Cameroon	CMR	high	70	66	64	72	70	76	64
+Uganda	UGA	high	69	64	66	70	68	70	64
+Lebanon	LBN	high	69	84	63	68	72	70	64
+Madagascar	MDG	high	68	65	72	72	66	64	64
+N. Sudan	SDN	high	68	66	62	68	70	70	66
+Eswatini	SWZ	high	67	65	60	70	67	62	66
+Malawi	MWI	high	67	64	65	70	65	62	64
+Angola	AGO	high	66	64	64	68	66	65	62
+Tanzania	TZA	high	66	62	65	67	65	65	61
+Burundi	BDI	high	65	63	66	68	65	67	62
+Honduras	HND	high	65	62	60	64	63	72	62
+Zambia	ZMB	high	64	62	63	66	62	60	61
+Rwanda	RWA	high	64	60	64	65	66	64	60
+Togo	TGO	high	63	61	63	65	63	59	61
+Liberia	LBR	high	63	61	63	66	62	60	61
+Senegal	SEN	high	62	60	62	64	61	62	60
+Kenya	KEN	high	62	59	64	62	63	64	59
+Comoros	COM	high	62	61	62	64	62	58	60
+Papua N.G.	PNG	high	61	59	62	63	60	63	58
+Bangladesh	BGD	high	61	58	72	57	63	59	57
+Kyrgyzstan	KGZ	high	61	58	58	57	64	62	58
+Guatemala	GTM	high	60	58	59	59	59	66	57
+Cambodia	KHM	high	60	57	61	59	62	58	57
+Bolivia	BOL	high	58	56	59	57	61	56	57
+Egypt	EGY	high	58	57	62	54	60	58	56
+Morocco	MAR	high	57	55	61	54	58	55	56
+Laos	LAO	high	57	55	61	55	59	53	56
+Côte d'Ivoire	CIV	high	56	55	61	57	56	57	54
+Sierra Leone	SLE	high	55	53	60	58	54	52	54
+W. Sahara	ESH	high	55	53	58	57	55	57	53
+Tajikistan	TJK	high	54	53	56	53	57	53	54
+Djibouti	DJI	high	54	54	60	54	55	52	53
+Timor-Leste	TLS	high	53	52	58	54	53	51	52
