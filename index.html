@@ -901,7 +901,7 @@
 
       function handleClick(i) {
         const ctx = contexts[i];
-        window.open("https://www.oecd.org/" + ctx.iso3.toLowerCase(), "_blank");
+        window.open("https://www.oecd.org/en/data/dashboards/multidimensional-fragility/fragility-profiles.html?oecdcontrol-chart-control-bar-b8282fc8a2-var1=" + ctx.iso3.toLowerCase(), "_blank");
         if (highlighted === i) {
           highlighted = null;
           resetAll();
