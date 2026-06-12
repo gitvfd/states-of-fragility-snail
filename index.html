@@ -182,6 +182,17 @@
         border-radius: 3px;
         overflow: hidden;
       }
+      .scale-swatches {
+        display: flex;
+        gap: 2px;
+        flex: 1;
+      }
+      .scale-swatch {
+        flex: 1;
+        height: 10px;
+        width:10px;
+        border-radius: 2px;
+      }
       .scale-end {
         font-size: 14px;
         color: var(--muted);
@@ -371,7 +382,7 @@
         border-radius: 2px;
       }
       #tt .tt-dv {
-        font-size: 10px;
+        font-size: 0px;
         width: 22px;
         text-align: right;
         opacity: 0.62;
@@ -385,12 +396,12 @@
         align-items: center;
       }
       #tt .tt-tl {
-        font-size: 10px;
+        font-size: 0px;
         opacity: 0.5;
       }
       #tt .tt-tv {
         font-family: "Noto Sans Display", sans-serif;
-        font-size: 17px;
+        font-size: 0px;
         font-weight: 600;
       }
     </style>
@@ -493,7 +504,7 @@
           <div id="scale-legend"></div>
           <p style="margin-top: 6px">
             <!--Normalised within dataset. Pale = best-performing in set; saturated
-            = worst. -->Click a serie to sort by that dimension.
+            = worst. -->Click a series to sort by that dimension.
           </p>
         </div>
       </div>
@@ -511,7 +522,14 @@
 
     <script>
       // ─── DATA ─────────────────────────────────────────────────────────────────────
-      d3.tsv("data.tsv", d3.autoType).then((contexts) => {
+      d3.tsv("data-new.tsv", (d) => {
+        // Fix European comma decimal separator before autoType
+        const fixed = {};
+        for (const [k, v] of Object.entries(d)) {
+          fixed[k] = typeof v === "string" ? v.replace(",", ".") : v;
+        }
+        return d3.autoType(fixed);
+      }).then((contexts) => {
 
       // ─── DIMENSIONS ───────────────────────────────────────────────────────────────
       const dims = [
@@ -523,14 +541,7 @@
         { key: "eco", label: "Economic", color: "#7A473E" },
       ];
 
-      // Per-dimension normalisation within dataset → [0,1]
-      const normScores = {};
-      dims.forEach((d) => {
-        const vals = contexts.map((c) => c[d.key]);
-        const lo = d3.min(vals),
-          hi = d3.max(vals);
-        normScores[d.key] = contexts.map((c) => (c[d.key] - lo) / (hi - lo));
-      });
+      // Categorical scale: 1 = most fragile (full color), 5 = least fragile (pale)
 
       // ─── HELPERS ──────────────────────────────────────────────────────────────────
       function paleTint(hex, s) {
@@ -544,22 +555,26 @@
           .formatHex();
       }
 
-      function dimFill(dimKey, i) {
+      function dimFill(dimKey, ctx) {
         const d = dims.find((x) => x.key === dimKey);
-        const norm = normScores[dimKey][i];
-        return d3.interpolateRgb(paleTint(d.color, 0.88), d.color)(norm);
+        const cat = ctx[dimKey]; // 1 (most fragile) → 5 (least fragile)
+        const tintAmount = (cat - 1) / 4 * 0.88;
+        return paleTint(d.color, tintAmount);
       }
 
       // ─── BUILD SCALE LEGEND ────────────────────────────────────────────────────────
       [...dims].reverse().forEach((d) => {
-        const pale = paleTint(d.color, 0.88);
         const row = document.createElement("div");
         row.className = "scale-row";
         row.dataset.key = d.key;
+        const swatches = [1, 2, 3, 4, 5].map(cat => {
+          const color = paleTint(d.color, (cat - 1) / 4 * 0.88);
+          return `<div class="scale-swatch" style="background:${color}" title="Category ${cat}"></div>`;
+        }).join("");
         row.innerHTML = `
-      <span class="scale-end">Low</span>
-      <div class="scale-bar" style="background:linear-gradient(to right,${pale},${d.color})"></div>
-      <span class="scale-end">High</span>
+      <span class="scale-end">Extreme</span>
+      <div class="scale-swatches">${swatches}</div>
+      <span class="scale-end">Minor</span>
       <span class="scale-name" style="color:${d.color}">${d.label}</span>`;
         document.getElementById("scale-legend").appendChild(row);
       });
@@ -576,9 +591,9 @@
         // Create a sorted copy of contexts
         let sortedContexts = [...contexts];
         if (sortByDim) {
-          sortedContexts.sort((a, b) => b[sortByDim] - a[sortByDim]);
+          sortedContexts.sort((a, b) => a[sortByDim] - b[sortByDim]);
         } else {
-          sortedContexts.sort((a, b) => b.overall - a.overall);
+          sortedContexts.sort((a, b) => a.overall - b.overall);
         }
 
         // Redraw segments in new order
@@ -595,14 +610,11 @@
         const g = svg.append("g").attr("class", "seg-group").attr("data-i", i);
         const patches = [];
 
-        // Find original index for color calculation
-        const origIndex = contexts.indexOf(ctx);
-
         // 6 dim rings
         dims.forEach((dim, j) => {
           const rIn = innerR + j * ringThick;
           const rOut = innerR + (j + 1) * ringThick;
-          const fill = dimFill(dim.key, origIndex);
+          const fill = dimFill(dim.key, ctx);
 
           const path = g
             .append("path")
@@ -680,7 +692,7 @@
           .attr("font-weight", ctx.tier === "extreme" ? 500 : 400)
           .attr("fill", ctx.tier === "extreme" ? "#271010" : "#505060")
           .style("pointer-events", "none")
-          .text(ctx.name);
+          .text(ctx.country);
 
         arcGroups.push({ ctx, patches, g });
       }
@@ -841,12 +853,12 @@
         });
 
         // Fill tooltip
-        document.getElementById("tt-name").textContent = ctx.name;
+        document.getElementById("tt-name").textContent = ctx.country;
         const tierEl = document.getElementById("tt-tier");
         tierEl.textContent =
           ctx.tier === "extreme" ? "Extreme Fragility" : "High Fragility";
         tierEl.style.color = ctx.tier === "extreme" ? "#BF3A2B" : "#E07B39";
-        document.getElementById("tt-tv").textContent = ctx.overall + " / 100";
+        document.getElementById("tt-tv").textContent = ctx.overall.toFixed(2);
 
         document.getElementById("tt-dims").innerHTML = [...dims]
           .reverse()
@@ -855,9 +867,7 @@
             const fill = patch?.fill || d.color;
             return `<div class="tt-dr">
         <span class="tt-dn">${d.label}</span>
-        <div class="tt-bg"><div class="tt-fill" style="width:${
-          ctx[d.key]
-        }%;background:${fill}"></div></div>
+        <div class="tt-bg"><div class="tt-fill" style="width:${(6 - ctx[d.key]) * 20}%;background:${fill}"></div></div>
         <span class="tt-dv">${ctx[d.key]}</span>
       </div>`;
           })
@@ -944,7 +954,7 @@
           resetAll();
           return;
         }
-        const idx = contexts.findIndex((c) => c.name.toLowerCase().includes(q));
+        const idx = contexts.findIndex((c) => c.country.toLowerCase().includes(q));
         if (idx >= 0) handleClick(idx);
         else {
           highlighted = null;
