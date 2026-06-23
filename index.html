@@ -102,7 +102,7 @@
         color: var(--muted);
         line-height: 1.6;
         margin-top: 5px;
-        max-width: 280px;
+        max-width: 310px;
       }
       .sec-label {
         font-size: 9.5px;
@@ -315,7 +315,7 @@
         border: 1px solid var(--border);
         border-radius: 8px;
         padding: 12px 16px;
-        max-width: 280px;
+        max-width: 310px;
         box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
         z-index: 10;
       }
@@ -502,9 +502,8 @@
         <div id="scale-legend-block">
           <!--<div class="sec-label">State of fragility</div>-->
           <div id="scale-legend"></div>
-          <p style="margin-top: 6px">
-            <!--Normalised within dataset. Pale = best-performing in set; saturated
-            = worst. -->Click a series to sort by that dimension.
+          <p id="legend-hint" style="margin-top: 6px">
+            Click a series to sort by that dimension.
           </p>
         </div>
       </div>
@@ -515,30 +514,44 @@
       <div class="tt-tier" id="tt-tier"></div>
       <div class="tt-dims" id="tt-dims"></div>
       <div class="tt-total">
-        <span class="tt-tl">Overall Score</span>
+        <span class="tt-tl" id="tt-total-label">Overall Score</span>
         <span class="tt-tv" id="tt-tv"></span>
       </div>
     </div>
 
     <script>
-      // ─── DATA ─────────────────────────────────────────────────────────────────────
-      d3.tsv("data-new.tsv", (d) => {
-        // Fix European comma decimal separator before autoType
-        const fixed = {};
-        for (const [k, v] of Object.entries(d)) {
-          fixed[k] = typeof v === "string" ? v.replace(",", ".") : v;
-        }
-        return d3.autoType(fixed);
-      }).then((contexts) => {
+      // ─── DATA & I18N ──────────────────────────────────────────────────────────────
+      Promise.all([
+        d3.tsv("data-new.tsv", (d) => {
+          // Fix European comma decimal separator before autoType
+          const fixed = {};
+          for (const [k, v] of Object.entries(d)) {
+            fixed[k] = typeof v === "string" ? v.replace(",", ".") : v;
+          }
+          return d3.autoType(fixed);
+        }),
+        d3.json("locales.json"),
+      ]).then(([contexts, locales]) => {
+        const lang = new URLSearchParams(window.location.search).get("lang") || "en";
+        const t = locales[lang] || locales["en"];
+
+        // Apply static DOM translations
+        document.title = t.title;
+        const searchEl = document.getElementById("search");
+        if (searchEl) searchEl.placeholder = t.search_placeholder;
+        document.getElementById("legend-hint").textContent = t.legend_hint;
+        document.getElementById("tt-total-label").textContent = t.overall_score;
+
+        const nameKey = lang === "fr" ? "country-fr" : "country";
 
       // ─── DIMENSIONS ───────────────────────────────────────────────────────────────
       const dims = [
-        { key: "soc", label: "Societal", color: "#464E70" },
-        { key: "sec", label: "Security", color: "#F2AE00" },
-        { key: "pol", label: "Political", color: "#9D2EBD" },
-        { key: "hum", label: "Human", color: "#C63963" },
-        { key: "env", label: "Environmental", color: "#46AEA7" },
-        { key: "eco", label: "Economic", color: "#7A473E" },
+        { key: "soc", label: t.dims.soc, color: "#464E70" },
+        { key: "sec", label: t.dims.sec, color: "#F2AE00" },
+        { key: "pol", label: t.dims.pol, color: "#9D2EBD" },
+        { key: "hum", label: t.dims.hum, color: "#C63963" },
+        { key: "env", label: t.dims.env, color: "#46AEA7" },
+        { key: "eco", label: t.dims.eco, color: "#7A473E" },
       ];
 
       // Categorical scale: 1 = most fragile (full color), 5 = least fragile (pale)
@@ -569,12 +582,12 @@
         row.dataset.key = d.key;
         const swatches = [1, 2, 3, 4, 5].map(cat => {
           const color = paleTint(d.color, (cat - 1) / 4 * 0.88);
-          return `<div class="scale-swatch" style="background:${color}" title="Category ${cat}"></div>`;
+          return `<div class="scale-swatch" style="background:${color}" title="${t.category} ${cat}"></div>`;
         }).join("");
         row.innerHTML = `
-      <span class="scale-end">Extreme</span>
+      <span class="scale-end">${t.scale_extreme}</span>
       <div class="scale-swatches">${swatches}</div>
-      <span class="scale-end">Minor</span>
+      <span class="scale-end">${t.scale_minor}</span>
       <span class="scale-name" style="color:${d.color}">${d.label}</span>`;
         document.getElementById("scale-legend").appendChild(row);
       });
@@ -692,7 +705,7 @@
           .attr("font-weight", ctx.tier === "extreme" ? 500 : 400)
           .attr("fill", ctx.tier === "extreme" ? "#271010" : "#505060")
           .style("pointer-events", "none")
-          .text(ctx.country);
+          .text(ctx[nameKey]);
 
         arcGroups.push({ ctx, patches, g });
       }
@@ -761,10 +774,10 @@
         .attr("fill", "none")
         .attr("stroke", "#FFFFFF")
         .attr("stroke-width", 1.5);
-      ["MOST", "FRAGILE"].forEach((w, i) => {
+      t.center.forEach((w, i) => {
         cg.append("text")
           .attr("text-anchor", "middle")
-          .attr("y", (i - 0.5) * 13 + 4)
+          .attr("y", (i - 0.5) * 13 -5)
           .attr("font-family", "'Noto Sans Displays',sans-serif")
           .attr("font-size", 9.5)
           .attr("font-weight", 600)
@@ -853,10 +866,10 @@
         });
 
         // Fill tooltip
-        document.getElementById("tt-name").textContent = ctx.country;
+        document.getElementById("tt-name").textContent = ctx[nameKey];
         const tierEl = document.getElementById("tt-tier");
         tierEl.textContent =
-          ctx.tier === "extreme" ? "Extreme Fragility" : "High Fragility";
+          ctx.tier === "extreme" ? t.tier_extreme : t.tier_high;
         tierEl.style.color = ctx.tier === "extreme" ? "#BF3A2B" : "#E07B39";
         document.getElementById("tt-tv").textContent = ctx.overall.toFixed(2);
 
@@ -901,7 +914,7 @@
 
       function handleClick(i) {
         const ctx = contexts[i];
-        window.open("https://www.oecd.org/en/data/dashboards/multidimensional-fragility/fragility-profiles.html?oecdcontrol-chart-control-bar-b8282fc8a2-var1=" + ctx.iso3.toLowerCase(), "_blank");
+        window.open("https://www.oecd.org/" + lang + "/data/dashboards/multidimensional-fragility/fragility-profiles.html?oecdcontrol-chart-control-bar-b8282fc8a2-var1=" + ctx.iso3.toLowerCase(), "_blank");
         if (highlighted === i) {
           highlighted = null;
           resetAll();
@@ -954,7 +967,7 @@
           resetAll();
           return;
         }
-        const idx = contexts.findIndex((c) => c.country.toLowerCase().includes(q));
+        const idx = contexts.findIndex((c) => c[nameKey].toLowerCase().includes(q));
         if (idx >= 0) handleClick(idx);
         else {
           highlighted = null;
@@ -974,7 +987,7 @@
             .attr("opacity", 1);
         });
       });
-      }); // end d3.tsv
+      }); // end Promise.all
     </script>
   </body>
 </html>

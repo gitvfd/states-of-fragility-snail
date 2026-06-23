@@ -1,0 +1,42 @@
+{
+  "en": {
+    "title": "States of Fragility — Snail",
+    "search_placeholder": "Search country…",
+    "legend_hint": "Click a series to sort by that dimension.",
+    "scale_extreme": "Extreme",
+    "scale_minor": "Minor",
+    "tier_extreme": "Extreme Fragility",
+    "tier_high": "High Fragility",
+    "overall_score": "Overall Score",
+    "center": ["HIGH", "AND", "EXTREME", "FRAGILITY"],
+    "category": "Category",
+    "dims": {
+      "soc": "Societal",
+      "sec": "Security",
+      "pol": "Political",
+      "hum": "Human",
+      "env": "Environmental",
+      "eco": "Economic"
+    }
+  },
+  "fr": {
+    "title": "États de fragilité — Escargot",
+    "search_placeholder": "Rechercher un pays…",
+    "legend_hint": "Cliquez sur une série pour trier par cette dimension.",
+    "scale_extreme": "Extrême",
+    "scale_minor": "Mineure",
+    "tier_extreme": "Fragilité extrême",
+    "tier_high": "Fragilité élevée",
+    "overall_score": "Score global",
+    "center": ["HAUTE", "ET", "EXTRÊME", "FRAGILITÉ"],
+    "category": "Catégorie",
+    "dims": {
+      "soc": "Sociétal",
+      "sec": "Sécurité",
+      "pol": "Politique",
+      "hum": "Humain",
+      "env": "Environnemental",
+      "eco": "Économique"
+    }
+  }
+}
