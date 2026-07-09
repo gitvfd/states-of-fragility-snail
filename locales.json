@@ -31,11 +31,11 @@
     "center": ["HAUTE", "ET", "EXTRÊME", "FRAGILITÉ"],
     "category": "Catégorie",
     "dims": {
-      "soc": "Sociétal",
+      "soc": "Sociétale",
       "sec": "Sécurité",
       "pol": "Politique",
-      "hum": "Humain",
-      "env": "Environnemental",
+      "hum": "Humaine",
+      "env": "Environnementale",
       "eco": "Économique"
     }
   }
